@@ -1,0 +1,37 @@
+server {
+    listen 8080;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Static frontend
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Proxy API calls to the FastAPI service.
+    # The /api prefix is stripped here (note the trailing slash on proxy_pass),
+    # so /api/words reaches the API as /words - the backend needs no knowledge
+    # of the prefix.
+    #
+    # API_HOST is templated at container start from the environment, so the same
+    # image works under Docker Compose (api:8000) and Kubernetes
+    # (api.<namespace>.svc.cluster.local:8000) without a rebuild.
+    # This is the "build once, promote the artifact" principle from M5.
+    location /api/ {
+        proxy_pass http://${API_HOST}/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Lightweight endpoint for Kubernetes probes - returns 200 without
+    # touching the API or the database.
+    location = /healthz {
+        access_log off;
+        add_header Content-Type text/plain;
+        return 200 "ok\n";
+    }
+}

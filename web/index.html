@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>English Mastery</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1e222b;
+    --border: #2a2f3a;
+    --text: #e6e8ec;
+    --muted: #8b93a3;
+    --accent: #4f8cff;
+    --good: #3fb950;
+    --warn: #d29922;
+    --bad: #f85149;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  nav { margin-left: auto; display: flex; gap: 4px; }
+  nav button {
+    background: none; border: 1px solid transparent; color: var(--muted);
+    padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 14px;
+  }
+  nav button.active { background: var(--panel-2); color: var(--text); border-color: var(--border); }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 24px 64px; }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+  }
+  .term { font-size: 38px; font-weight: 600; letter-spacing: -0.5px; }
+  .translation {
+    font-size: 24px; margin-top: 16px; color: var(--accent);
+    direction: rtl; font-family: "Segoe UI", Arial, sans-serif;
+  }
+  .sentence {
+    margin-top: 20px; color: var(--muted); font-style: italic; font-size: 15px;
+  }
+  .hidden { visibility: hidden; }
+
+  .meta {
+    display: flex; justify-content: center; gap: 24px;
+    margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--muted);
+  }
+  .meta span b { color: var(--text); font-weight: 600; }
+
+  .btn {
+    background: var(--accent); color: #fff; border: none;
+    padding: 10px 20px; border-radius: 8px; font-size: 15px; cursor: pointer;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn.secondary { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); }
+
+  .grades { display: flex; gap: 8px; margin-top: 24px; justify-content: center; flex-wrap: wrap; }
+  .grade {
+    flex: 1; min-width: 96px; background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 10px 8px; cursor: pointer; font-size: 13px;
+  }
+  .grade:hover { border-color: var(--accent); }
+  .grade b { display: block; font-size: 16px; margin-bottom: 2px; }
+  .grade.g0 b, .grade.g1 b, .grade.g2 b { color: var(--bad); }
+  .grade.g3 b { color: var(--warn); }
+  .grade.g4 b, .grade.g5 b { color: var(--good); }
+
+  .actions { margin-top: 24px; display: flex; gap: 8px; justify-content: center; }
+
+  form { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 15px;
+    margin-bottom: 16px; font-family: inherit;
+  }
+  input:focus { outline: none; border-color: var(--accent); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td.rtl { direction: rtl; text-align: right; }
+  .due { color: var(--good); }
+  .later { color: var(--muted); }
+
+  .empty { text-align: center; color: var(--muted); padding: 48px 0; }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 18px; border-radius: 8px; font-size: 14px; opacity: 0;
+    transition: opacity 0.2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .stats { display: flex; gap: 12px; margin-bottom: 24px; }
+  .stat {
+    flex: 1; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; text-align: center;
+  }
+  .stat b { display: block; font-size: 26px; }
+  .stat span { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>English Mastery</h1>
+  <span class="sub">spaced repetition - SM-2</span>
+  <nav>
+    <button data-view="review" class="active">Review</button>
+    <button data-view="words">Words</button>
+    <button data-view="add">Add</button>
+  </nav>
+</header>
+
+<main>
+
+  <section id="view-review" class="view active">
+    <div id="review-body"></div>
+  </section>
+
+  <section id="view-words" class="view">
+    <div class="stats" id="stats"></div>
+    <div id="words-body"></div>
+  </section>
+
+  <section id="view-add" class="view">
+    <form id="add-form">
+      <label for="f-word">Word</label>
+      <input id="f-word" required autocomplete="off" placeholder="ubiquitous">
+
+      <label for="f-translation">Translation</label>
+      <input id="f-translation" required autocomplete="off" placeholder="נמצא בכל מקום" dir="rtl">
+
+      <label for="f-sentence">Example sentence (optional)</label>
+      <input id="f-sentence" autocomplete="off" placeholder="Containers are now ubiquitous.">
+
+      <button type="submit" class="btn">Add word</button>
+    </form>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "/api";
+let current = null;
+let revealed = false;
+
+const GRADES = [
+  { q: 0, label: "Blackout" },
+  { q: 1, label: "Wrong" },
+  { q: 2, label: "Hard" },
+  { q: 3, label: "Difficult" },
+  { q: 4, label: "Good" },
+  { q: 5, label: "Perfect" },
+];
+
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
+
+async function api(path, opts) {
+  const res = await fetch(API + path, {
+    headers: { "Content-Type": "application/json" },
+    ...opts,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const err = new Error(body.detail || res.statusText);
+    err.status = res.status;
+    throw err;
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+// ---------- Review ----------
+
+async function loadNext() {
+  const body = document.getElementById("review-body");
+  body.innerHTML = '<div class="empty">Loading...</div>';
+  revealed = false;
+  try {
+    current = await api("/words/next");
+    renderCard();
+  } catch (e) {
+    current = null;
+    if (e.status === 404) {
+      body.innerHTML = '<div class="empty">Nothing due for review right now.<br>' +
+        'Every word has been scheduled for a future date.</div>';
+    } else {
+      body.innerHTML = '<div class="empty">API error: ' + esc(e.message) + '</div>';
+    }
+  }
+}
+
+function renderCard() {
+  const w = current;
+  const body = document.getElementById("review-body");
+  const nextDate = new Date(w.next_review_at).toLocaleDateString();
+  body.innerHTML = `
+    <div class="card">
+      <div class="term">${esc(w.word)}</div>
+      <div class="translation ${revealed ? "" : "hidden"}">${esc(w.translation)}</div>
+      <div class="sentence ${revealed ? "" : "hidden"}">${esc(w.example_sentence || " ")}</div>
+      <div class="meta">
+        <span>reps <b>${w.repetitions}</b></span>
+        <span>interval <b>${w.interval_days}d</b></span>
+        <span>EF <b>${w.easiness_factor.toFixed(2)}</b></span>
+        <span>due <b>${nextDate}</b></span>
+      </div>
+      ${revealed ? gradesHtml() : `
+        <div class="actions">
+          <button class="btn" id="reveal">Show translation</button>
+          <button class="btn secondary" id="skip">Skip</button>
+        </div>`}
+    </div>`;
+
+  if (revealed) {
+    body.querySelectorAll(".grade").forEach(b => {
+      b.onclick = () => submitReview(parseInt(b.dataset.q, 10));
+    });
+  } else {
+    body.querySelector("#reveal").onclick = () => { revealed = true; renderCard(); };
+    body.querySelector("#skip").onclick = loadNext;
+  }
+}
+
+function gradesHtml() {
+  return '<div class="grades">' + GRADES.map(g =>
+    `<button class="grade g${g.q}" data-q="${g.q}"><b>${g.q}</b>${g.label}</button>`
+  ).join("") + "</div>";
+}
+
+async function submitReview(quality) {
+  try {
+    await api("/reviews", {
+      method: "POST",
+      body: JSON.stringify({ word_id: current.id, quality }),
+    });
+    toast("Review queued - worker is recalculating the schedule");
+    // The worker processes asynchronously, so give it a moment before asking
+    // for the next word, otherwise this word may still look due.
+    setTimeout(loadNext, 700);
+  } catch (e) {
+    toast("Failed: " + e.message);
+  }
+}
+
+// ---------- Words list ----------
+
+async function loadWords() {
+  const body = document.getElementById("words-body");
+  const stats = document.getElementById("stats");
+  body.innerHTML = '<div class="empty">Loading...</div>';
+  try {
+    const words = await api("/words");
+    if (!words.length) {
+      stats.innerHTML = "";
+      body.innerHTML = '<div class="empty">No words yet. Seed the database or add one.</div>';
+      return;
+    }
+    const now = new Date();
+    const due = words.filter(w => new Date(w.next_review_at) <= now).length;
+    const learned = words.filter(w => w.repetitions > 0).length;
+
+    stats.innerHTML = `
+      <div class="stat"><b>${words.length}</b><span>total</span></div>
+      <div class="stat"><b>${due}</b><span>due now</span></div>
+      <div class="stat"><b>${learned}</b><span>reviewed at least once</span></div>`;
+
+    body.innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Word</th><th>Translation</th><th>Reps</th><th>Interval</th><th>EF</th><th>Next review</th>
+        </tr></thead>
+        <tbody>${words.map(w => {
+          const d = new Date(w.next_review_at);
+          const isDue = d <= now;
+          return `<tr>
+            <td>${esc(w.word)}</td>
+            <td class="rtl">${esc(w.translation)}</td>
+            <td>${w.repetitions}</td>
+            <td>${w.interval_days}d</td>
+            <td>${w.easiness_factor.toFixed(2)}</td>
+            <td class="${isDue ? "due" : "later"}">${isDue ? "due now" : d.toLocaleDateString()}</td>
+          </tr>`;
+        }).join("")}</tbody>
+      </table>`;
+  } catch (e) {
+    body.innerHTML = '<div class="empty">API error: ' + esc(e.message) + '</div>';
+  }
+}
+
+// ---------- Add ----------
+
+document.getElementById("add-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const word = document.getElementById("f-word").value.trim();
+  const translation = document.getElementById("f-translation").value.trim();
+  const example_sentence = document.getElementById("f-sentence").value.trim() || null;
+  try {
+    await api("/words", {
+      method: "POST",
+      body: JSON.stringify({ word, translation, example_sentence }),
+    });
+    toast("Added: " + word);
+    ev.target.reset();
+    document.getElementById("f-word").focus();
+  } catch (e) {
+    toast("Failed: " + e.message);
+  }
+});
+
+// ---------- Nav ----------
+
+document.querySelectorAll("nav button").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("view-" + btn.dataset.view).classList.add("active");
+    if (btn.dataset.view === "review") loadNext();
+    if (btn.dataset.view === "words") loadWords();
+  };
+});
+
+loadNext();
+</script>
+</body>
+</html>
