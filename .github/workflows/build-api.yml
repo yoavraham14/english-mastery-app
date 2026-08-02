@@ -16,7 +16,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -52,3 +52,23 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Install yq
+        run: |
+          sudo wget -q https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Update image tag in Helm values
+        run: |
+          IMAGE_FULL="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          NEW_TAG="sha-${{ github.sha }}"
+          yq -i ".api.image = \"${IMAGE_FULL}\"" charts/english-mastery/values.yaml
+          yq -i ".api.imageTag = \"${NEW_TAG}\"" charts/english-mastery/values.yaml
+
+      - name: Commit and push updated values
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add charts/english-mastery/values.yaml
+          git diff --cached --quiet && echo "No changes to commit" || git commit -m "Deploy api sha-${{ github.sha }}"
+          git push
