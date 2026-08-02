@@ -26,5 +26,8 @@ spec:
         - /data
 
   syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
     syncOptions:
       - RespectIgnoreDifferences=true
