@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.web.name }}
+  labels:
+    app: {{ .Values.general.app }}
+    name: {{ .Values.web.name }}
+spec:
+  replicas: {{ .Values.web.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.general.app }}
+      name: {{ .Values.web.name }}
+  template:
+    metadata:
+      name: {{ .Values.web.name }}
+      labels:
+        app: {{ .Values.general.app }}
+        name: {{ .Values.web.name }}
+    spec:
+      containers:
+      - name: {{ .Values.web.name }}
+        image: {{ .Values.web.image }}:{{ .Values.web.imageTag }}
+        imagePullPolicy: {{ .Values.web.imagePullPolicy }}
+        resources:
+          requests:
+            cpu: {{ .Values.web.resources.requests.cpu | quote }}
+            memory: {{ .Values.web.resources.requests.memory | quote }}
+          limits:
+            cpu: {{ .Values.web.resources.limits.cpu | quote }}
+            memory: {{ .Values.web.resources.limits.memory | quote }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.configMap.name }}
+        env:
+        - name: API_HOST
+          value: "{{ .Values.api.name }}:{{ .Values.api.port }}"
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.web.livenessProbe.path }}
+            port: {{ .Values.web.port }}
+          initialDelaySeconds: {{ .Values.web.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.web.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.web.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.web.livenessProbe.failureThreshold }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.web.readinessProbe.path }}
+            port: {{ .Values.web.port }}
+          initialDelaySeconds: {{ .Values.web.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.web.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.web.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.web.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.web.readinessProbe.failureThreshold }}

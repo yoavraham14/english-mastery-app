@@ -1,0 +1,115 @@
+general:
+  app: english-app
+
+postgres:
+  name: postgres
+  secretName: postgres-secret
+  image: postgres:18.4-alpine
+  storage: 5Gi
+  port: 5432
+  replicas: 1
+  imagePullPolicy: IfNotPresent
+  livenessProbe:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+redis:
+  name: redis
+  image: redis
+  port: 6379
+  replicas: 1
+  imagePullPolicy: IfNotPresent
+
+api:
+  port: 8000
+  name: api
+  image: english-mastery-app-api
+  imageTag: latest
+  imagePullPolicy: IfNotPresent
+  replicas: 2
+  hpa:
+    minReplicas: 2
+    maxReplicas: 6
+    cpuTargetPercent: 50
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi" 
+  livenessProbe:
+    path: /docs
+    port: 8000
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  readinessProbe:
+    path: /docs
+    port: 8000
+    initialDelaySeconds: 4
+    periodSeconds: 10
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 3
+
+worker:
+  name: worker
+  image: english-mastery-app-worker
+  imageTag: latest
+  imagePullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "300Mi"
+    limits:
+      cpu: "250m"
+      memory: "500Mi"
+
+web:
+  name: web
+  port: 8080
+  image: english-mastery-app-web
+  imageTag: latest
+  imagePullPolicy: IfNotPresent
+  replicas: 3
+  resources:
+    requests:
+      cpu: "10m"
+      memory: "50Mi"
+    limits:
+      cpu: "100m"
+      memory: "100Mi"
+  livenessProbe:
+    path: /healthz
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+  readinessProbe:
+    path: /healthz
+    initialDelaySeconds: 4
+    periodSeconds: 10
+    timeoutSeconds: 3
+    successThreshold: 1
+    failureThreshold: 3
+
+configMap:
+  name: app-cm
+
+ingress:
+  name: app-ingress
+  className: nginx
+
+
+

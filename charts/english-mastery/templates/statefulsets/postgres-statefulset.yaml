@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.postgres.name }}
+  labels:
+    app: {{ .Values.general.app }}
+    name: {{ .Values.postgres.name }}
+spec:
+  replicas: {{ .Values.postgres.replicas }} 
+  selector:
+    matchLabels:
+      app: {{ .Values.general.app }}
+      name: {{ .Values.postgres.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.general.app }}
+        name: {{ .Values.postgres.name }}
+    spec:
+      containers:
+      - name: {{ .Values.postgres.name }}
+        image: {{ .Values.postgres.image }}
+        imagePullPolicy: {{ .Values.postgres.imagePullPolicy }}
+        envFrom:
+        - secretRef:
+            name: {{ .Values.postgres.secretName }}
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql
+        livenessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"
+          initialDelaySeconds: {{ .Values.postgres.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.postgres.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.postgres.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.postgres.livenessProbe.failureThreshold }}
+        readinessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"
+          initialDelaySeconds: {{ .Values.postgres.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.postgres.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.postgres.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.postgres.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.postgres.readinessProbe.failureThreshold }}
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: {{ .Values.postgres.storage }}

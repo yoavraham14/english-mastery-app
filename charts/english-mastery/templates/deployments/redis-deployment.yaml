@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.redis.name }}
+  labels:
+    app: {{ .Values.general.app }}
+    name: {{ .Values.redis.name }}
+spec:
+  replicas: {{ .Values.redis.replicas }} 
+  selector:
+    matchLabels:
+      app: {{ .Values.general.app }}
+      name: {{ .Values.redis.name }}
+  template:
+    metadata:
+      name: {{ .Values.redis.name }}
+      labels: 
+        app: {{ .Values.general.app }}
+        name: {{ .Values.redis.name }}
+    spec:
+      containers:
+      - name: {{ .Values.redis.name }}
+        image: {{ .Values.redis.image }} 
+        imagePullPolicy: {{ .Values.redis.imagePullPolicy }}
+
+
+   

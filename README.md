@@ -22,7 +22,9 @@ The API dispatches review-processing work by task name
 (`worker.tasks.process_review`) via `celery_app.send_task(...)`, without importing the
 worker's code directly, so the two services stay decoupled at the image level.
 
-## Running locally
+## Running locally (Docker Compose)
+
+Simplest way to run the full stack for local development - no cluster required.
 
 ```bash
 docker compose up --build
@@ -37,9 +39,80 @@ docker compose up --build
 docker compose run --rm api python -m scripts.seed
 ```
 
-Loads ~70 English words with Hebrew translations and example sentences. The script is
-idempotent - existing words are skipped, so it is safe to run repeatedly. In Kubernetes
-this becomes a Job rather than a Deployment.
+Loads ~135 English words with Hebrew translations and example sentences, drawn from
+real DevOps/production vocabulary. The script is idempotent - existing words are
+skipped, so it is safe to run repeatedly.
+
+## Running on Kubernetes (Helm)
+
+The full stack (api, worker, postgres, redis, web, plus Ingress and an HPA for the
+api) is packaged as a Helm chart at `charts/english-mastery/`. Requires a running
+cluster (e.g. a local Kind cluster) and an Ingress controller (ingress-nginx)
+installed separately.
+
+### First-time setup
+
+Copy the example secrets file and fill in real values - `values-secrets.yaml` is
+gitignored and must never be committed:
+
+```bash
+cp charts/english-mastery/values-secrets.example.yaml charts/english-mastery/values-secrets.yaml
+# edit values-secrets.yaml with real Postgres credentials
+```
+
+### Install
+
+```bash
+helm install english-mastery ./charts/english-mastery \
+  -f charts/english-mastery/values-secrets.yaml \
+  --rollback-on-failure
+```
+
+### Upgrade (after changing values.yaml, or to deploy a new image tag)
+
+```bash
+helm upgrade english-mastery ./charts/english-mastery \
+  -f charts/english-mastery/values-secrets.yaml \
+  --rollback-on-failure
+```
+
+To deploy a specific image built by CI (see below) without editing `values.yaml`:
+
+```bash
+helm upgrade english-mastery ./charts/english-mastery \
+  -f charts/english-mastery/values-secrets.yaml \
+  --set api.image=ghcr.io/<username>/english-mastery-app \
+  --set api.imageTag=<sha-tag-from-ghcr> \
+  --rollback-on-failure
+```
+
+**Note (local Kind clusters only):** GHCR images are not automatically reachable by
+a local cluster's nodes. Pull and load the image manually before upgrading:
+
+```bash
+docker pull ghcr.io/<username>/english-mastery-app:<sha-tag>
+kind load docker-image ghcr.io/<username>/english-mastery-app:<sha-tag> --name <cluster-name>
+```
+
+### Seeding the database (Kubernetes)
+
+```bash
+kubectl exec -it <api-pod-name> -- python -m scripts.seed
+```
+
+### Uninstall
+
+```bash
+helm uninstall english-mastery
+```
+
+## CI
+
+`.github/workflows/build-api.yml` builds the `api` image and pushes it to GHCR
+(tagged `latest` and `sha-<commit-sha>`) on every push to `main` that touches `api/**`
+or `common/**`. This is CI only, not CD - deploying the new image to a cluster is a
+manual step (see `helm upgrade` above), since GitHub-hosted runners have no network
+path to a local Kind cluster.
 
 ## Endpoints
 

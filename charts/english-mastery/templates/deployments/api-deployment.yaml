@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.api.name }}
+  labels:
+    app: {{ .Values.general.app }}
+    name: {{ .Values.api.name }}
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.general.app }}
+      name: {{ .Values.api.name }}
+  template:
+    metadata:
+      name: {{ .Values.api.name }}
+      labels: 
+        app: {{ .Values.general.app }}
+        name: {{ .Values.api.name }}
+    spec:
+      containers:
+      - name: {{ .Values.api.name }}
+        image: {{ .Values.api.image }}:{{ .Values.api.imageTag}}
+        imagePullPolicy: {{ .Values.api.imagePullPolicy }}
+        resources:
+          requests:
+            cpu: {{ .Values.api.resources.requests.cpu }}
+            memory: {{ .Values.api.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.api.resources.limits.cpu }}
+            memory: {{ .Values.api.resources.limits.memory }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.configMap.name }}
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.postgres.secretName }}
+              key: DATABASE_URL
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.api.livenessProbe.path }}
+            port: {{ .Values.api.livenessProbe.port }}
+          initialDelaySeconds: {{ .Values.api.livenessProbe.initialDelaySeconds }} 
+          periodSeconds: {{ .Values.api.livenessProbe.periodSeconds }}       
+          timeoutSeconds: {{ .Values.api.livenessProbe.timeoutSeconds }}       
+          failureThreshold: {{ .Values.api.livenessProbe.failureThreshold }}     
+
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.api.readinessProbe.path }}
+            port: {{ .Values.api.readinessProbe.port }}
+          initialDelaySeconds: {{ .Values.api.readinessProbe.initialDelaySeconds }} 
+          periodSeconds: {{ .Values.api.readinessProbe.periodSeconds }}       
+          timeoutSeconds: {{ .Values.api.readinessProbe.timeoutSeconds }}       
+          failureThreshold: {{ .Values.api.readinessProbe.failureThreshold }} 
+          successThreshold: {{ .Values.api.readinessProbe.successThreshold }}    
