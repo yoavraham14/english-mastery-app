@@ -111,5 +111,13 @@ ingress:
   name: app-ingress
   className: nginx
 
+# Real credential VALUES live in values-secrets.yaml (gitignored, never committed).
+# ArgoCD only sees this file (values.yaml), so it cannot render the Secret template -
+# see NOTES.md for how the Secret is handled outside ArgoCD's management.
+secrets:
+  postgresUser: ""
+  postgresPassword: ""
+  postgresDb: ""
+
 
 
