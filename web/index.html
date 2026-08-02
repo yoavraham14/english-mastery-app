@@ -3,133 +3,278 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>English Mastery</title>
+<title>Field Log — English Mastery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f1115;
-    --panel: #171a21;
-    --panel-2: #1e222b;
-    --border: #2a2f3a;
-    --text: #e6e8ec;
-    --muted: #8b93a3;
-    --accent: #4f8cff;
-    --good: #3fb950;
-    --warn: #d29922;
-    --bad: #f85149;
+    --bg: #12181f;
+    --bg-grid: rgba(255,255,255,0.035);
+    --panel: #171f28;
+    --panel-2: #1c2530;
+    --hairline: rgba(255,255,255,0.09);
+    --card: #f5eddc;
+    --card-edge: #e3d8bc;
+    --ink: #2a2318;
+    --ink-soft: #6b5f47;
+    --text: #d7dce3;
+    --muted: #6b7684;
+    --signal: #e8a33d;
+    --signal-deep: #b97a1f;
+    --good: #5fae6e;
+    --bad: #c1554a;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
+    --serif: "Source Serif 4", Georgia, serif;
   }
   * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
   body {
     margin: 0;
-    background: var(--bg);
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+    background-size: 28px 28px;
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--mono);
     line-height: 1.5;
+    min-height: 100vh;
   }
+
+  a, button, input { font-family: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 2px;
+  }
+
   header {
-    border-bottom: 1px solid var(--border);
-    padding: 16px 24px;
+    border-bottom: 1px solid var(--hairline);
+    padding: 18px 24px;
     display: flex;
     align-items: baseline;
-    gap: 16px;
+    gap: 14px;
+    backdrop-filter: blur(2px);
   }
-  header h1 { font-size: 18px; margin: 0; font-weight: 600; }
-  header .sub { color: var(--muted); font-size: 13px; }
-  nav { margin-left: auto; display: flex; gap: 4px; }
+  header .mark {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--signal);
+    box-shadow: 0 0 0 3px rgba(232,163,61,0.15);
+    flex: none;
+    align-self: center;
+  }
+  header h1 {
+    font-size: 14px; margin: 0; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--text);
+  }
+  header .sub {
+    color: var(--muted); font-size: 12px; letter-spacing: 0.02em;
+  }
+  nav { margin-left: auto; display: flex; gap: 2px; }
   nav button {
     background: none; border: 1px solid transparent; color: var(--muted);
-    padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 14px;
+    padding: 7px 14px; cursor: pointer; font-size: 12px; font-family: var(--mono);
+    letter-spacing: 0.05em; text-transform: uppercase; border-radius: 3px;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
   }
-  nav button.active { background: var(--panel-2); color: var(--text); border-color: var(--border); }
-  main { max-width: 760px; margin: 0 auto; padding: 32px 24px 64px; }
-  .view { display: none; }
-  .view.active { display: block; }
+  nav button:hover { color: var(--text); }
+  nav button.active {
+    background: var(--panel-2); color: var(--signal); border-color: var(--hairline);
+  }
 
+  main { max-width: 720px; margin: 0 auto; padding: 40px 24px 80px; }
+  .view { display: none; }
+  .view.active { display: block; animation: fadeIn 0.25s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  /* ---- The index card: the signature element ---- */
+  .card-wrap { display: flex; justify-content: center; padding: 12px 0 28px; }
   .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 32px;
-    text-align: center;
+    position: relative;
+    background: var(--card);
+    color: var(--ink);
+    width: 100%;
+    max-width: 480px;
+    padding: 40px 36px 32px;
+    border-radius: 3px;
+    box-shadow:
+      0 1px 0 var(--card-edge) inset,
+      0 18px 40px -12px rgba(0,0,0,0.55),
+      0 4px 10px -4px rgba(0,0,0,0.4);
+    transform: rotate(-0.6deg);
+    transition: transform 0.2s ease;
   }
-  .term { font-size: 38px; font-weight: 600; letter-spacing: -0.5px; }
+  .card::before {
+    /* punch-hole, top-left, like a real index card */
+    content: "";
+    position: absolute;
+    top: 16px; left: 16px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--bg);
+    box-shadow: inset 0 2px 3px rgba(0,0,0,0.5);
+  }
+  .card::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 44px; right: 16px; height: 1px;
+    background: repeating-linear-gradient(90deg, var(--card-edge) 0 6px, transparent 6px 11px);
+  }
+  .ticket-id {
+    position: absolute; top: 14px; right: 18px;
+    font-size: 10px; letter-spacing: 0.08em; color: var(--ink-soft);
+    font-family: var(--mono);
+  }
+
+  .term {
+    font-family: var(--serif);
+    font-size: 40px; font-weight: 600; letter-spacing: -0.01em;
+    margin-top: 6px;
+    color: var(--ink);
+  }
   .translation {
-    font-size: 24px; margin-top: 16px; color: var(--accent);
-    direction: rtl; font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 22px; margin-top: 14px; color: var(--signal-deep);
+    direction: rtl; font-family: Arial, "Segoe UI", sans-serif;
+    font-weight: 600;
   }
   .sentence {
-    margin-top: 20px; color: var(--muted); font-style: italic; font-size: 15px;
+    margin-top: 18px; color: var(--ink-soft); font-style: italic; font-size: 14.5px;
+    font-family: var(--serif);
+    border-left: 2px solid var(--card-edge);
+    padding-left: 12px;
   }
   .hidden { visibility: hidden; }
 
   .meta {
-    display: flex; justify-content: center; gap: 24px;
-    margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);
-    font-size: 12px; color: var(--muted);
+    display: flex; justify-content: flex-start; gap: 20px; flex-wrap: wrap;
+    margin-top: 26px; padding-top: 16px; border-top: 1px dashed var(--card-edge);
+    font-size: 10.5px; color: var(--ink-soft); font-family: var(--mono);
+    letter-spacing: 0.02em; text-transform: uppercase;
   }
-  .meta span b { color: var(--text); font-weight: 600; }
+  .meta span b {
+    color: var(--ink); font-weight: 600; display: block;
+    font-size: 13px; text-transform: none; letter-spacing: 0; margin-top: 2px;
+  }
 
   .btn {
-    background: var(--accent); color: #fff; border: none;
-    padding: 10px 20px; border-radius: 8px; font-size: 15px; cursor: pointer;
+    background: var(--signal); color: #1c1305; border: none;
+    padding: 11px 22px; border-radius: 3px; font-size: 13px; cursor: pointer;
+    font-family: var(--mono); font-weight: 600; letter-spacing: 0.02em;
+    transition: filter 0.15s, transform 0.1s;
   }
-  .btn:hover { filter: brightness(1.1); }
-  .btn.secondary { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active { transform: translateY(1px); }
+  .btn.secondary {
+    background: transparent; border: 1px solid var(--hairline); color: var(--text);
+  }
+  .btn.secondary:hover { border-color: var(--muted); }
 
-  .grades { display: flex; gap: 8px; margin-top: 24px; justify-content: center; flex-wrap: wrap; }
+  .actions { margin-top: 26px; display: flex; gap: 10px; justify-content: center; }
+
+  .grades { display: flex; gap: 6px; margin-top: 26px; justify-content: center; flex-wrap: wrap; }
   .grade {
-    flex: 1; min-width: 96px; background: var(--panel-2); border: 1px solid var(--border);
-    color: var(--text); border-radius: 8px; padding: 10px 8px; cursor: pointer; font-size: 13px;
+    flex: 1; min-width: 88px; background: rgba(0,0,0,0.04); border: 1px solid var(--card-edge);
+    color: var(--ink); border-radius: 3px; padding: 9px 6px; cursor: pointer; font-size: 11px;
+    font-family: var(--mono); letter-spacing: 0.02em; text-transform: uppercase;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
   }
-  .grade:hover { border-color: var(--accent); }
-  .grade b { display: block; font-size: 16px; margin-bottom: 2px; }
+  .grade:hover { transform: translateY(-2px); box-shadow: 0 4px 10px -4px rgba(0,0,0,0.3); }
+  .grade b { display: block; font-size: 15px; margin-bottom: 3px; font-family: var(--serif); }
   .grade.g0 b, .grade.g1 b, .grade.g2 b { color: var(--bad); }
-  .grade.g3 b { color: var(--warn); }
+  .grade.g3 b { color: var(--signal-deep); }
   .grade.g4 b, .grade.g5 b { color: var(--good); }
 
-  .actions { margin-top: 24px; display: flex; gap: 8px; justify-content: center; }
-
-  form { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
-  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-  input {
-    width: 100%; background: var(--bg); border: 1px solid var(--border);
-    color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 15px;
-    margin-bottom: 16px; font-family: inherit;
+  @keyframes stamp {
+    0%   { transform: scale(1) rotate(-0.6deg); }
+    35%  { transform: scale(0.96) rotate(0.4deg); }
+    60%  { transform: scale(1.015) rotate(-0.3deg); }
+    100% { transform: scale(1) rotate(-0.6deg); }
   }
-  input:focus { outline: none; border-color: var(--accent); }
+  .card.stamped { animation: stamp 0.32s ease-out; }
 
-  table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-  td.rtl { direction: rtl; text-align: right; }
-  .due { color: var(--good); }
+  form.card-form {
+    background: var(--panel); border: 1px solid var(--hairline); border-radius: 4px;
+    padding: 28px; max-width: 480px; margin: 0 auto;
+  }
+  form.card-form .eyebrow {
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--signal);
+    margin-bottom: 18px;
+  }
+  label {
+    display: block; font-size: 11px; color: var(--muted); margin-bottom: 6px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  input {
+    width: 100%; background: var(--bg); border: 1px solid var(--hairline);
+    color: var(--text); padding: 11px 12px; border-radius: 3px; font-size: 14px;
+    margin-bottom: 18px; transition: border-color 0.15s;
+  }
+  input:focus { outline: none; border-color: var(--signal); }
+  input::placeholder { color: #3d4552; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--hairline); }
+  th {
+    color: var(--muted); font-weight: 500; font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  td { font-variant-numeric: tabular-nums; }
+  tr:hover td { background: rgba(255,255,255,0.015); }
+  td.rtl { direction: rtl; text-align: right; font-family: Arial, sans-serif; }
+  .due { color: var(--signal); font-weight: 600; }
   .later { color: var(--muted); }
 
-  .empty { text-align: center; color: var(--muted); padding: 48px 0; }
+  .empty {
+    text-align: center; color: var(--muted); padding: 56px 24px;
+    font-size: 13px; line-height: 1.7;
+  }
+  .empty .glyph { font-size: 22px; display: block; margin-bottom: 10px; opacity: 0.5; }
+
   .toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
-    padding: 10px 18px; border-radius: 8px; font-size: 14px; opacity: 0;
-    transition: opacity 0.2s; pointer-events: none;
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(8px);
+    background: var(--panel-2); border: 1px solid var(--hairline); color: var(--text);
+    padding: 11px 20px; border-radius: 4px; font-size: 12.5px; opacity: 0;
+    transition: opacity 0.2s, transform 0.2s; pointer-events: none;
+    box-shadow: 0 10px 30px -8px rgba(0,0,0,0.5);
   }
-  .toast.show { opacity: 1; }
-  .stats { display: flex; gap: 12px; margin-bottom: 24px; }
+  .toast::before { content: "▸ "; color: var(--signal); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .stats { display: flex; gap: 10px; margin-bottom: 24px; }
   .stat {
-    flex: 1; background: var(--panel); border: 1px solid var(--border);
-    border-radius: 10px; padding: 16px; text-align: center;
+    flex: 1; background: var(--panel); border: 1px solid var(--hairline);
+    border-radius: 4px; padding: 14px 12px; text-align: center;
   }
-  .stat b { display: block; font-size: 26px; }
-  .stat span { font-size: 12px; color: var(--muted); }
+  .stat b { display: block; font-size: 24px; font-family: var(--serif); color: var(--text); }
+  .stat span {
+    font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 560px) {
+    header { padding: 14px 16px; flex-wrap: wrap; }
+    header .sub { display: none; }
+    nav { width: 100%; margin-left: 0; justify-content: space-between; }
+    nav button { flex: 1; text-align: center; }
+    main { padding: 24px 16px 64px; }
+    .card { padding: 30px 22px 24px; }
+    .term { font-size: 32px; }
+    .grades { flex-direction: column; }
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>English Mastery</h1>
-  <span class="sub">spaced repetition - SM-2</span>
+  <span class="mark"></span>
+  <h1>Field Log</h1>
+  <span class="sub">english vocabulary · spaced repetition (SM-2)</span>
   <nav>
-    <button data-view="review" class="active">Review</button>
-    <button data-view="words">Words</button>
-    <button data-view="add">Add</button>
+    <button data-view="review" class="active">Queue</button>
+    <button data-view="words">Log</button>
+    <button data-view="add">New Entry</button>
   </nav>
 </header>
 
@@ -145,7 +290,9 @@
   </section>
 
   <section id="view-add" class="view">
-    <form id="add-form">
+    <form id="add-form" class="card-form">
+      <div class="eyebrow">Log a new term</div>
+
       <label for="f-word">Word</label>
       <input id="f-word" required autocomplete="off" placeholder="ubiquitous">
 
@@ -155,7 +302,7 @@
       <label for="f-sentence">Example sentence (optional)</label>
       <input id="f-sentence" autocomplete="off" placeholder="Containers are now ubiquitous.">
 
-      <button type="submit" class="btn">Add word</button>
+      <button type="submit" class="btn">Add to log</button>
     </form>
   </section>
 
@@ -190,6 +337,10 @@ function esc(s) {
   ));
 }
 
+function ticketId(id) {
+  return "CARD-" + String(id ?? 0).padStart(4, "0");
+}
+
 async function api(path, opts) {
   const res = await fetch(API + path, {
     headers: { "Content-Type": "application/json" },
@@ -208,7 +359,7 @@ async function api(path, opts) {
 
 async function loadNext() {
   const body = document.getElementById("review-body");
-  body.innerHTML = '<div class="empty">Loading...</div>';
+  body.innerHTML = '<div class="empty">Checking the queue…</div>';
   revealed = false;
   try {
     current = await api("/words/next");
@@ -216,34 +367,41 @@ async function loadNext() {
   } catch (e) {
     current = null;
     if (e.status === 404) {
-      body.innerHTML = '<div class="empty">Nothing due for review right now.<br>' +
-        'Every word has been scheduled for a future date.</div>';
+      body.innerHTML = `
+        <div class="empty">
+          <span class="glyph">◇</span>
+          Queue is clear. Nothing is due for review right now —<br>
+          every card is scheduled for a later date.
+        </div>`;
     } else {
       body.innerHTML = '<div class="empty">API error: ' + esc(e.message) + '</div>';
     }
   }
 }
 
-function renderCard() {
+function renderCard(justStamped) {
   const w = current;
   const body = document.getElementById("review-body");
   const nextDate = new Date(w.next_review_at).toLocaleDateString();
   body.innerHTML = `
-    <div class="card">
-      <div class="term">${esc(w.word)}</div>
-      <div class="translation ${revealed ? "" : "hidden"}">${esc(w.translation)}</div>
-      <div class="sentence ${revealed ? "" : "hidden"}">${esc(w.example_sentence || " ")}</div>
-      <div class="meta">
-        <span>reps <b>${w.repetitions}</b></span>
-        <span>interval <b>${w.interval_days}d</b></span>
-        <span>EF <b>${w.easiness_factor.toFixed(2)}</b></span>
-        <span>due <b>${nextDate}</b></span>
+    <div class="card-wrap">
+      <div class="card ${justStamped ? "stamped" : ""}">
+        <span class="ticket-id">${ticketId(w.id)}</span>
+        <div class="term">${esc(w.word)}</div>
+        <div class="translation ${revealed ? "" : "hidden"}">${esc(w.translation)}</div>
+        <div class="sentence ${revealed ? "" : "hidden"}">${esc(w.example_sentence || " ")}</div>
+        <div class="meta">
+          <span>reps<b>${w.repetitions}</b></span>
+          <span>interval<b>${w.interval_days}d</b></span>
+          <span>ease factor<b>${w.easiness_factor.toFixed(2)}</b></span>
+          <span>next due<b>${nextDate}</b></span>
+        </div>
+        ${revealed ? gradesHtml() : `
+          <div class="actions">
+            <button class="btn" id="reveal">Show translation</button>
+            <button class="btn secondary" id="skip">Skip</button>
+          </div>`}
       </div>
-      ${revealed ? gradesHtml() : `
-        <div class="actions">
-          <button class="btn" id="reveal">Show translation</button>
-          <button class="btn secondary" id="skip">Skip</button>
-        </div>`}
     </div>`;
 
   if (revealed) {
@@ -268,7 +426,7 @@ async function submitReview(quality) {
       method: "POST",
       body: JSON.stringify({ word_id: current.id, quality }),
     });
-    toast("Review queued - worker is recalculating the schedule");
+    toast("Logged — worker is recalculating the next due date");
     // The worker processes asynchronously, so give it a moment before asking
     // for the next word, otherwise this word may still look due.
     setTimeout(loadNext, 700);
@@ -282,12 +440,16 @@ async function submitReview(quality) {
 async function loadWords() {
   const body = document.getElementById("words-body");
   const stats = document.getElementById("stats");
-  body.innerHTML = '<div class="empty">Loading...</div>';
+  body.innerHTML = '<div class="empty">Reading the log…</div>';
   try {
     const words = await api("/words");
     if (!words.length) {
       stats.innerHTML = "";
-      body.innerHTML = '<div class="empty">No words yet. Seed the database or add one.</div>';
+      body.innerHTML = `
+        <div class="empty">
+          <span class="glyph">◇</span>
+          The log is empty. Seed the database, or file a new entry.
+        </div>`;
       return;
     }
     const now = new Date();
@@ -295,14 +457,14 @@ async function loadWords() {
     const learned = words.filter(w => w.repetitions > 0).length;
 
     stats.innerHTML = `
-      <div class="stat"><b>${words.length}</b><span>total</span></div>
+      <div class="stat"><b>${words.length}</b><span>total entries</span></div>
       <div class="stat"><b>${due}</b><span>due now</span></div>
-      <div class="stat"><b>${learned}</b><span>reviewed at least once</span></div>`;
+      <div class="stat"><b>${learned}</b><span>reviewed once+</span></div>`;
 
     body.innerHTML = `
       <table>
         <thead><tr>
-          <th>Word</th><th>Translation</th><th>Reps</th><th>Interval</th><th>EF</th><th>Next review</th>
+          <th>Word</th><th>Translation</th><th>Reps</th><th>Interval</th><th>EF</th><th>Next due</th>
         </tr></thead>
         <tbody>${words.map(w => {
           const d = new Date(w.next_review_at);
@@ -334,7 +496,7 @@ document.getElementById("add-form").addEventListener("submit", async (ev) => {
       method: "POST",
       body: JSON.stringify({ word, translation, example_sentence }),
     });
-    toast("Added: " + word);
+    toast("Filed: " + word);
     ev.target.reset();
     document.getElementById("f-word").focus();
   } catch (e) {

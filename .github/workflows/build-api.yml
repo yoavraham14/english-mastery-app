@@ -1,4 +1,4 @@
-name: Build and Push API Image
+name: Build and Push Images
 
 on:
   push:
@@ -7,18 +7,37 @@ on:
     paths:
       - 'api/**'
       - 'common/**'
+      - 'web/**'
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ vars.IMAGE_NAME }}
 
 jobs:
-  build-and-push:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'api/**'
+              - 'common/**'
+            web:
+              - 'web/**'
+
+  build-api:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.api == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,7 +53,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api
           tags: |
             type=raw,value=latest
             type=sha,format=long
@@ -50,18 +69,19 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
 
       - name: Install yq
         run: |
           sudo wget -q https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
           sudo chmod +x /usr/local/bin/yq
 
-      - name: Update image tag in Helm values
+      - name: Update api image tag in Helm values
         run: |
-          IMAGE_FULL="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          IMAGE_FULL="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-api"
           NEW_TAG="sha-${{ github.sha }}"
+          git pull --rebase origin main
           yq -i ".api.image = \"${IMAGE_FULL}\"" charts/english-mastery/values.yaml
           yq -i ".api.imageTag = \"${NEW_TAG}\"" charts/english-mastery/values.yaml
 
@@ -71,4 +91,66 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add charts/english-mastery/values.yaml
           git diff --cached --quiet && echo "No changes to commit" || git commit -m "Deploy api sha-${{ github.sha }}"
+          git push
+
+  build-web:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web
+          tags: |
+            type=raw,value=latest
+            type=sha,format=long
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./web/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+      - name: Install yq
+        run: |
+          sudo wget -q https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/local/bin/yq
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Update web image tag in Helm values
+        run: |
+          IMAGE_FULL="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web"
+          NEW_TAG="sha-${{ github.sha }}"
+          git pull --rebase origin main
+          yq -i ".web.image = \"${IMAGE_FULL}\"" charts/english-mastery/values.yaml
+          yq -i ".web.imageTag = \"${NEW_TAG}\"" charts/english-mastery/values.yaml
+
+      - name: Commit and push updated values
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add charts/english-mastery/values.yaml
+          git diff --cached --quiet && echo "No changes to commit" || git commit -m "Deploy web sha-${{ github.sha }}"
           git push
