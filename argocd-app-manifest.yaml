@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: english-mastery
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/yoavraham14/english-mastery-app
+    targetRevision: main
+    path: charts/english-mastery
+    helm:
+      valueFiles:
+        - values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: postgres-secret
+      jsonPointers:
+        - /data
+
+  syncPolicy:
+    syncOptions:
+      - RespectIgnoreDifferences=true
