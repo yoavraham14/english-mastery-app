@@ -34,7 +34,7 @@ api:
   image: english-mastery-app-api
   imageTag: latest
   imagePullPolicy: IfNotPresent
-  replicas: 2
+  replicas: 4
   hpa:
     minReplicas: 2
     maxReplicas: 6
