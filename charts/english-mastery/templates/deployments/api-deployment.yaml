@@ -18,6 +18,7 @@ spec:
         app: {{ .Values.general.app }}
         name: {{ .Values.api.name }}
     spec:
+      serviceAccountName: {{ .Values.api.serviceAccountName }}
       containers:
       - name: {{ .Values.api.name }}
         image: {{ .Values.api.image }}:{{ .Values.api.imageTag}}

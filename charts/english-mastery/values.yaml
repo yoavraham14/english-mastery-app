@@ -31,6 +31,7 @@ redis:
 api:
   port: 8000
   name: api
+  serviceAccountName: api-sa
   image: english-mastery-app-api
   imageTag: latest
   imagePullPolicy: IfNotPresent
