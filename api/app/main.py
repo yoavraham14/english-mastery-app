@@ -8,11 +8,20 @@ from common.celery_app import celery_app
 from common.database import Base, engine, get_db
 from common.models import Word
 from common.schemas import ReviewAccepted, ReviewSubmit, WordCreate, WordOut
+from prometheus_client import Counter, make_asgi_app
 
 app = FastAPI(title="English Mastery API")
 
 Base.metadata.create_all(bind=engine)
 
+
+review_counter = Counter(
+    "review_submissions_total",
+    "Total number of review submissions processed"
+)
+
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 
 @app.post("/words", response_model=WordOut, status_code=201)
 def add_word(payload: WordCreate, db: Session = Depends(get_db)):
@@ -55,6 +64,7 @@ def submit_review(payload: ReviewSubmit, db: Session = Depends(get_db)):
     word = db.get(Word, payload.word_id)
     if word is None:
         raise HTTPException(status_code=404, detail="Word not found")
+    review_counter.inc()
 
     task = celery_app.send_task(
         "worker.tasks.process_review",
