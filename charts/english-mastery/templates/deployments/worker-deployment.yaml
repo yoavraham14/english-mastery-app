@@ -32,3 +32,5 @@ spec:
         envFrom:
         - secretRef:
             name: {{ .Values.postgres.secretName }}
+        - configMapRef:
+            name: {{ .Values.configMap.name }}
