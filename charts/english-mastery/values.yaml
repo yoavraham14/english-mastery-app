@@ -1,6 +1,5 @@
 general:
   app: english-app
-
 postgres:
   name: postgres
   secretName: postgres-secret
@@ -20,14 +19,12 @@ postgres:
     timeoutSeconds: 5
     successThreshold: 1
     failureThreshold: 3
-
 redis:
   name: redis
   image: redis
   port: 6379
   replicas: 1
   imagePullPolicy: IfNotPresent
-
 api:
   port: 8000
   name: api
@@ -46,7 +43,7 @@ api:
       memory: "128Mi"
     limits:
       cpu: "500m"
-      memory: "256Mi" 
+      memory: "256Mi"
   livenessProbe:
     path: /docs
     port: 8000
@@ -62,7 +59,6 @@ api:
     timeoutSeconds: 3
     successThreshold: 1
     failureThreshold: 3
-
 worker:
   name: worker
   image: english-mastery-app-worker
@@ -76,12 +72,11 @@ worker:
     limits:
       cpu: "250m"
       memory: "500Mi"
-
 web:
   name: web
   port: 8080
-  image: english-mastery-app-web
-  imageTag: latest
+  image: ghcr.io/yoavraham14/english-mastery-app-api-web
+  imageTag: sha-8516c383b099c29ef2695d68859c6ebdece3d5a8
   imagePullPolicy: IfNotPresent
   replicas: 3
   resources:
@@ -104,14 +99,11 @@ web:
     timeoutSeconds: 3
     successThreshold: 1
     failureThreshold: 3
-
 configMap:
   name: app-cm
-
 ingress:
   name: app-ingress
   className: nginx
-
 # Real credential VALUES live in values-secrets.yaml (gitignored, never committed).
 # ArgoCD only sees this file (values.yaml), so it cannot render the Secret template -
 # see NOTES.md for how the Secret is handled outside ArgoCD's management.
@@ -119,6 +111,3 @@ secrets:
   postgresUser: ""
   postgresPassword: ""
   postgresDb: ""
-
-
-
