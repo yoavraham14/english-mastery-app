@@ -29,8 +29,8 @@ api:
   port: 8000
   name: api
   serviceAccountName: api-sa
-  image: english-mastery-app-api
-  imageTag: latest
+  image: ghcr.io/yoavraham14/english-mastery-app-api-api
+  imageTag: sha-9e05f3bcd5dd45bf9f64cf5e9aba11a29b7eaa51
   imagePullPolicy: IfNotPresent
   replicas: 4
   hpa:
