@@ -101,6 +101,8 @@ web:
     failureThreshold: 3
 configMap:
   name: app-cm
+serviceMonitor:
+  enabled: true
 ingress:
   enabled: true
   name: app-ingress

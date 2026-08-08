@@ -28,3 +28,6 @@ web:
 
 ingress:
   enabled: false
+
+serviceMonitor:
+  enabled: false
