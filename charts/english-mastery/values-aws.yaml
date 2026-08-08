@@ -1,0 +1,30 @@
+# AWS/EKS overlay - layered on top of values.yaml with:
+#   helm install ... -f values.yaml -f values-secrets.yaml -f values-aws.yaml
+#
+# Differences from the base (Kind) values:
+#   - images point to ECR instead of GHCR/local
+#   - web exposed via LoadBalancer instead of ClusterIP+Ingress
+#   - ingress disabled (no ingress controller installed on this cluster)
+#   - replicas reduced + HPA disabled (t3.small capacity, verification-only deploy)
+
+api:
+  image: 892218553031.dkr.ecr.us-east-1.amazonaws.com/english-mastery-app-api
+  imageTag: latest
+  replicas: 1
+  hpa:
+    minReplicas: 1
+    maxReplicas: 1
+
+worker:
+  image: 892218553031.dkr.ecr.us-east-1.amazonaws.com/english-mastery-app-worker
+  imageTag: latest
+  replicas: 1
+
+web:
+  image: 892218553031.dkr.ecr.us-east-1.amazonaws.com/english-mastery-app-web
+  imageTag: latest
+  replicas: 1
+  serviceType: LoadBalancer
+
+ingress:
+  enabled: false

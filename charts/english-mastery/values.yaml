@@ -102,6 +102,7 @@ web:
 configMap:
   name: app-cm
 ingress:
+  enabled: true
   name: app-ingress
   className: nginx
 # Real credential VALUES live in values-secrets.yaml (gitignored, never committed).
